@@ -1,0 +1,41 @@
+name: Update Portfolio
+
+on:
+  schedule:
+    - cron: '0 */8 * * *'  # Runs every 8 hours
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  update-portfolio:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run portfolio update script
+      run: |
+        python pdys.py
+
+    - name: Commit and push changes
+      run: |
+        git config --global user.name 'github-actions'
+        git config --global user.email 'github-actions@github.com'
+        git checkout -b gh-pages || git checkout gh-pages
+        cp margin_pnl.xlsx .
+        git add margin_pnl.xlsx
+        git commit -m 'Update portfolio data'
+        git push origin gh-pages --force
