@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from binance.client import Client
 import openpyxl
-from datetime import datetime, timedelta
+from datetime import datetime
 import keys  # Ensure you have your API keys in a file named keys.py
 
 # Your Binance API credentials
@@ -12,8 +12,8 @@ api_secret = keys.secret
 # Initialize the Binance client
 client = Client(api_key, api_secret)
 
-# Path to the past data CSV file
-past_data_file = 'past_data.csv'
+# Path to the past data Excel file
+past_data_file = 'past_data.xlsx'
 
 # Fetch the margin balance information from Binance Futures
 def get_margin_balance():
@@ -24,7 +24,7 @@ def get_margin_balance():
 # Initialize Excel file with past data if it doesn't exist
 def initialize_excel(file_path, past_data_file):
     if not os.path.exists(file_path):
-        past_data = pd.read_csv(past_data_file)
+        past_data = pd.read_excel(past_data_file)
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Records"
@@ -110,6 +110,28 @@ def calculate_average_pnl(file_path):
     avg_ws.append(['Last 1 Day', avg_pnl_1_day, avg_pnl_1_day_percentage])
     wb.save(file_path)
 
+# Generate HTML file from Excel data
+def generate_html(file_path):
+    df = pd.read_excel(file_path, sheet_name='Records')
+    html_table = df.to_html(index=False)
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Margin PNL Records</title>
+    </head>
+    <body>
+        <h1>Margin PNL Records</h1>
+        {html_table}
+    </body>
+    </html>
+    """
+
+    with open("index.html", "w") as file:
+        file.write(html_content)
+
 # Main function to fetch and update positions
 def main():
     if os.name == 'nt':
@@ -118,6 +140,7 @@ def main():
         desktop_path = os.path.join(os.environ['HOME'], 'Desktop', 'margin_pnl.xlsx')
 
     update_excel(desktop_path)
+    generate_html(desktop_path)
 
 if __name__ == "__main__":
     main()
